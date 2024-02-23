@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Regeneron File Comparison App</title>
+    <script>
+        function downloadFile() {
+            // Send a POST request to the /compare route
+            var form = document.getElementById("comparisonForm");
+            var formData = new FormData(form);
+
+            fetch("/compare", {
+                method: "POST",
+                body: formData
+            })
+            .then(response => {
+                // Redirect to the download route after file comparison
+                window.location.href = "/download/output.csv";
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        }
+    </script>
+</head>
+<body>
+    <h1>Regeneron Excel File Comparison</h1>
+    <form id="comparisonForm" action="/compare" method="post" enctype="multipart/form-data">
+        <label for="original_file">Original Excel File:</label>
+        <input type="file" id="original_file" name="excelFile1" accept=".xlsx, .xls"><br>
+        <label for="review_file">Review Excel File:</label>
+        <input type="file" id="review_file" name="excelFile2" accept=".xlsx, .xls"><br>
+        <input type="button" value="Compare" onclick="downloadFile()">
+    </form>
+</body>
+</html>
