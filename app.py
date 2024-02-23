@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, send_from_directory
+from flask import Flask, make_response, render_template, request, send_file 
 import pandas as pd
 import os
 import numpy as np
@@ -17,23 +17,12 @@ def compare():
         original_file = request.files['excelFile1']
         review_file = request.files['excelFile2']
 
-        # Save the uploaded files to temporary location
-        UPLOAD_FOLDER = 'uploads'
-        if not os.path.exists(UPLOAD_FOLDER):
-            os.makedirs(UPLOAD_FOLDER)
-
-        original_path = os.path.join(UPLOAD_FOLDER, original_file.filename)
-        review_path = os.path.join(UPLOAD_FOLDER, review_file.filename)
-        original_file.save(original_path)
-        review_file.save(review_path)
-
         # Read Excel files
-        dforiginal = pd.read_excel(original_path)
-        dfreview = pd.read_excel(review_path)
+        dforiginal = pd.read_excel(original_file)
+        dfreview = pd.read_excel(review_file)
 
         # Compare values
         comparevalues = dforiginal.values == dfreview.values 
-        print(comparevalues)
 
         # Find differences
         rows, cols = np.where(comparevalues == False)
@@ -45,20 +34,17 @@ def compare():
             # Cast the columns to string before assigning string values
             dforiginal.iloc[item[0], item[1]] = 'Incorrect'.format(str(value1), str(value2))
 
-        # Save to output CSV file
-        output_file_path = os.path.join(UPLOAD_FOLDER, "output.csv")
-        dforiginal.to_csv(output_file_path, index=False)
+        # Save to output CSV file in memory
+        output_csv = dforiginal.to_csv(index=False)
 
-        # Remove temporary files
-        os.remove(original_path)
-        os.remove(review_path)
+        # Create a response object
+        response = make_response(output_csv)
+        
+        # Set headers to force file download
+        response.headers['Content-Disposition'] = 'attachment; filename=output.csv'
+        response.headers['Content-Type'] = 'text/csv'
 
-        return redirect(url_for('download', filename="output.csv"))
-
-@app.route('/download/<filename>')
-def download(filename):
-    UPLOAD_FOLDER = 'uploads'  # Define UPLOAD_FOLDER here or globally
-    return send_from_directory(UPLOAD_FOLDER, filename, as_attachment=True)
+        return response
 
 if __name__ == '__main__':
     app.run(debug=True)

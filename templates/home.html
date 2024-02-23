@@ -8,17 +8,42 @@
             var form = document.getElementById("comparisonForm");
             var formData = new FormData(form);
 
-            fetch("/compare", {
-                method: "POST",
-                body: formData
-            })
-            .then(response => {
-                // Redirect to the download route after file comparison
-                window.location.href = "/download/output.csv";
-            })
-            .catch(error => {
-                console.error('Error:', error);
-            });
+            // Assume formData is already defined
+
+        fetch("/compare", {
+            method: "POST",
+            body: formData
+        })
+        .then(response => {
+            // Check if the response is successful
+            if (response.ok) {
+                // Convert the response to a blob
+                return response.blob();
+            } else {
+                // Handle errors
+                throw new Error('Failed to compare files');
+            }
+        })
+        .then(blob => {
+            // Create a URL for the blob
+            const url = window.URL.createObjectURL(blob);
+            
+            // Create a temporary link element
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'output.csv';
+            
+            // Trigger the download
+            document.body.appendChild(link);
+            link.click();
+            
+            // Clean up
+            URL.revokeObjectURL(url);
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+
         }
     </script>
 </head>
